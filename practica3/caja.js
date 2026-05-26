@@ -1,57 +1,48 @@
-function procesarPedido(nombreCliente, items) {
-    let itemsDetalle = [];
+import { preguntar, color, db, listarProductos } from './datos.js';
 
-    for (let item of items) {
-        const { productoId, cantidad } = item; 
-        const producto = productos.find(p => p.id === productoId); 
-        
-        if (producto) {
-            if (producto.cantidad >= cantidad && cantidad > 0) {
-                producto.cantidad -= cantidad;
-                
-                let subtotalItem = producto.precio * cantidad;
-                let notaPromo = "";
-
-                if (cantidad === 3) {
-                    subtotalItem = producto.precio * 2;
-                    notaPromo = ` ${color.verde}[PROMO 3x2]${color.reset}`;
-                } else if (cantidad > 3) {
-                    subtotalItem = subtotalItem * 0.90;
-                    notaPromo = ` ${color.verde}[-10% DESC]${color.reset}`;
-                }
-
-                itemsDetalle.push({
-                    nombre: producto.nombre + notaPromo,
-                    cantidad: cantidad,
-                    subtotalItem: subtotalItem
-                });
-            } else {
-                console.log(`${color.rojo}Stock insuficiente para el producto ID ${productoId}${color.reset}`);
-            }
-        } else {
-            console.log(`${color.rojo}Producto ID ${productoId} no encontrado.${color.reset}`);
-        }
+export function notificarCaja(error, pedido) {
+    if (error) {
+        console.log(`\n${color.fondoBlanco}${color.rojo}  [CAJA] Notificación: Pedido #${pedido.id} CANCELADO. Motivo: ${error} ${color.reset}`);
+    } else {
+        console.log(`\n${color.fondoBlanco}${color.verde}  [CAJA] Notificación: Pedido #${pedido.id} LISTO. Total cobrado: $${pedido.total.toFixed(2)} ${color.reset}`);
+        db.pedidos.push(pedido);
+        db.totalAcumulado += pedido.total;
     }
+}
 
-    if (itemsDetalle.length > 0) {
-        const subtotalPedido = itemsDetalle.reduce((acumulador, itemActual) => acumulador + itemActual.subtotalItem, 0);
-        const iva = subtotalPedido * 0.16;
-        const totalPedido = subtotalPedido + iva;
-
-        const nuevoPedido = {
-            id: contadorPedidos++,
-            cliente: nombreCliente.trim(),
-            items: itemsDetalle,
-            subtotal: subtotalPedido,
-            iva: iva,
-            total: totalPedido
-        };
-        pedidos.push(nuevoPedido);
-        totalAcumulado += totalPedido;
+export async function menuCaja() {
+    let salir = false;
+    while (!salir) {
+        console.log(`\n${color.fondoVerde}${color.blanco} --- MODULO CAJA --- ${color.reset}`);
+        console.log(`${color.blanco}1. Mostrar inventario${color.reset}`);
+        console.log(`${color.blanco}2. Mostrar todos los pedidos${color.reset}`);
+        console.log(`${color.blanco}3. Ver total acumulado${color.reset}`);
+        console.log(`${color.blanco}4. Regresar al menu principal${color.reset}`);
         
-        console.log(`\n${color.fondoVerde}${color.blanco} Pedido #${nuevoPedido.id} procesado con exito ${color.reset}`);
-        console.log(`Subtotal: $${subtotalPedido.toFixed(2)} | IVA (16%): $${iva.toFixed(2)} | ${color.fondoBlanco}${color.negro} TOTAL: $${totalPedido.toFixed(2)} ${color.reset}`);
+        const opcion = await preguntar(`\n${color.verde}Elige una opcion: ${color.reset}`);
         
-        mostrarPromociones();
+        switch (opcion.trim()) {
+            case '1':
+                listarProductos();
+                break;
+            case '2':
+                if (db.pedidos.length === 0) {
+                    console.log(`\n${color.rojo}No hay pedidos registrados.${color.reset}`);
+                } else {
+                    console.log(`\n${color.fondoBlanco}${color.verde} --- HISTORIAL DE PEDIDOS --- ${color.reset}`);
+                    db.pedidos.forEach(pedido => {
+                        console.log(`Pedido #${color.verde}${pedido.id}${color.reset} | Cliente: ${color.blanco}${pedido.cliente}${color.reset} | Total: ${color.verde}$${pedido.total.toFixed(2)}${color.reset}`);
+                    });
+                }
+                break;
+            case '3':
+                console.log(`\n${color.fondoVerde}${color.blanco} Total acumulado en caja: $${db.totalAcumulado.toFixed(2)} ${color.reset}`);
+                break;
+            case '4':
+                salir = true;
+                break;
+            default:
+                console.log(`${color.rojo}Opcion no valida.${color.reset}`);
+        }
     }
 }
