@@ -1,13 +1,12 @@
 /* Zona1: Importaciones de componentes y archivos */
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
-import MenuScreen from './screens/MenuScreen';
 
 /* Zona2: Main - Hogar de los componentes */
-export default function App() {
+export default function SafeAreaScreen() {
   return (
     <View style={styles.container}>
-      <MenuScreen/>
+      <Text>Aquí el screen de TextInput</Text>
       <StatusBar style="auto" />
 
     </View>
@@ -18,9 +17,10 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffbc58',
+    backgroundColor: '#fff',
     alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'column',
+    justifyContent: 'space-between',
+    flexDirection: 'row-reverse',
+    paddingHorizontal: 20,
   },
 });
