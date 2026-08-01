@@ -1,20 +1,32 @@
-import React,{useState, useEffect} from 'react';
-import {SafeAreaView,View,Text,FlatList,StyleSheet,} from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { SafeAreaView, View, Text, FlatList, StyleSheet, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+
+const API_URL = "http://172.20.10.11:5000/v1/usuarios";
 
 export default function ConsultaUsuariosScreen() {
 
   const [usuarios, setUsuarios] = useState([]);
+  const router = useRouter();
+
   const obtenerUsuarios = async () => {
     try {
-      const respuesta = await fetch('http://192.168.1.68:5000/v1/usuarios');
+      const respuesta = await fetch(API_URL);
       const datos = await respuesta.json();
       console.log("Respuesta API: ", datos);
       setUsuarios(datos.usuarios);
-    }catch (error) {
+    } catch (error) {
       console.error("Error API: ", error);
     }
   };
-  useEffect(() => {obtenerUsuarios();}, [])
+
+  useFocusEffect(
+    useCallback(() => {
+      obtenerUsuarios();
+    }, [])
+  );
+
   const renderTarjeta = ({ item }) => (
     <View style={styles.card}>
 
@@ -25,6 +37,13 @@ export default function ConsultaUsuariosScreen() {
       <Text style={styles.info}>
         Edad: {item.edad} años
       </Text>
+
+      <Pressable
+        style={styles.botonDetalle}
+        onPress={() => router.push(`/detalle/${item.id ?? item._id}`)}
+      >
+        <Text style={styles.textoDetalle}>Ver detalles →</Text>
+      </Pressable>
 
     </View>
   );
@@ -39,7 +58,7 @@ export default function ConsultaUsuariosScreen() {
 
       <FlatList
         data={usuarios}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         renderItem={renderTarjeta}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 20 }}
@@ -47,7 +66,7 @@ export default function ConsultaUsuariosScreen() {
 
     </SafeAreaView>
   );
-  
+
 }
 
 const styles = StyleSheet.create({
@@ -97,6 +116,17 @@ const styles = StyleSheet.create({
   info: {
     fontSize: 16,
     color: '#4B5563',
+  },
+
+  botonDetalle: {
+    alignSelf: 'flex-end',
+    marginTop: 10,
+  },
+
+  textoDetalle: {
+    color: '#2563EB',
+    fontWeight: '600',
+    fontSize: 14,
   },
 
 });

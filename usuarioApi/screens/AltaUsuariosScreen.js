@@ -1,64 +1,85 @@
 import React, { useState } from 'react';
 import {View,SafeAreaView,Text,TextInput,Pressable,StyleSheet,Alert,Platform} from 'react-native';
 
+const API_URL = "http://172.20.10.11:5000/v1/usuarios";
+
 export default function App() {
-  const [nombre, setNombre] = useState('');
-  const [edad, setEdad] = useState('');
+  const [nombre, setNombre] = useState("");
+  const [edad, setEdad] = useState("");
   const [cargando, setCargando] = useState(false);
 
-  const mostrarMensaje = (titulo,mensaje) => {
-    if(Platform.OS === 'web') {
+  const mostrarMensaje = (titulo, mensaje) => {
+    if (Platform.OS === "web") {
       window.alert(`${titulo}\n${mensaje}`);
     } else {
-      Alert.alert(titulo,mensaje);
+      Alert.alert(titulo, mensaje);
     }
   };
 
   const guardarUsuario = async () => {
-    if(nombre.trim() === '' || edad.trim() === '') {
-      mostrarMensaje("Vacios","Completa el formulario")
+    const nombreLimpio = nombre.trim();
+    const edadLimpia = edad.trim();
+
+    if (nombreLimpio === "" || edadLimpia === "") {
+      mostrarMensaje("Vacíos", "Completa el formulario");
       return;
     }
-    try{
-      setCargando(true);
-      const respuesta = await fetch('http://192.168.1.68:5000/v1/usuarios', 
-        {
-        method: 'POST',
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({nombre:nombre, edad:Number(edad)})
-        }
-      );
-      const datos= await respuesta.json();
 
-      console.log("Respuesta API:",datos);
-      mostrarMensaje("Exito","Usuario Registrado");
-
-      setNombre('');
-      setEdad('');
-      
-    }catch(error){
-      console.log("Error API",error);
-      mostrarMensaje("Error","No fue posible guardar");
+    const edadNumerica = Number(edadLimpia);
+    if (Number.isNaN(edadNumerica)) {
+      mostrarMensaje("Dato inválido", "La edad debe ser un número");
+      return;
     }
-    finally{
+
+    const controlador = new AbortController();
+    const limite = setTimeout(() => controlador.abort(), 10000);
+
+    try {
+      setCargando(true);
+      const respuesta = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: nombreLimpio,
+          edad: edadNumerica,
+        }),
+        signal: controlador.signal,
+      });
+
+      if (!respuesta.ok) {
+        throw new Error(`Error del servidor: ${respuesta.status}`);
+      }
+
+      const datos = await respuesta.json();
+      console.log("Respuesta API:", datos);
+
+      mostrarMensaje("Éxito", "Usuario agregado correctamente");
+      setNombre("");
+      setEdad("");
+    } catch (error) {
+      if (error.name === "AbortError") {
+        mostrarMensaje("Sin conexión", "El servidor no respondió a tiempo. Revisa la IP y la red.");
+      } else {
+        mostrarMensaje("Error", "No se pudo guardar el usuario");
+      }
+      console.log("Error API:", error);
+    } finally {
+      clearTimeout(limite);
       setCargando(false);
     }
-  }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-
       <View style={styles.card}>
-
-        <Text style={styles.titulo}>
-          Registro de Usuarios
-        </Text>
+        <Text style={styles.titulo}>Registro de Usuarios</Text>
 
         <TextInput
           style={styles.input}
           placeholder="Nombre del usuario"
           value={nombre}
           onChangeText={setNombre}
+          editable={!cargando}
         />
 
         <TextInput
@@ -67,16 +88,19 @@ export default function App() {
           keyboardType="numeric"
           value={edad}
           onChangeText={setEdad}
+          editable={!cargando}
         />
 
-        <Pressable style={styles.boton} onPress={guardarUsuario} disabled={cargando}>
+        <Pressable
+          style={styles.boton}
+          onPress={guardarUsuario}
+          disabled={cargando}
+        >
           <Text style={styles.textoBoton}>
-           {cargando ? "Guardando..." : "Agregar Usuario"}
+            {cargando ? "Guardando..." : "Agregar Usuario"}
           </Text>
         </Pressable>
-
       </View>
-
     </SafeAreaView>
   );
 }
