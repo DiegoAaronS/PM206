@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "repa2",
+    "displayName": "Practica 22",
     "slug": "repa2",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,7 +14,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.diegoaaronssorganization.repa2",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -27,6 +32,12 @@
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "556b4957-1754-4cd6-baa6-6050eeb0a098"
+      }
+    }
   }
 }
